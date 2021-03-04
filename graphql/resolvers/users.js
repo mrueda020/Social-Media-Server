@@ -15,7 +15,7 @@ module.exports = {
       { registerInput: { username, email, password, confirmPassword } }
     ) {
       //TODO validate user data
-      const { errors, valid } = validateRegisterInput(
+      const { valid, errors } = validateRegisterInput(
         username,
         email,
         password,
@@ -32,7 +32,7 @@ module.exports = {
       const user = await User.findOne({ username: username });
       if (user) {
         throw new UserInputError("Username is taken", {
-          error: {
+          errors: {
             username: "This username is taken",
           },
         });
@@ -64,20 +64,27 @@ module.exports = {
 
     async login(_, { username, password }) {
       const { errors, valid } = validateLoginInput(username, password);
+
       if (!valid) {
-        throw new UserInputError("Form not valid", errors);
+        throw new UserInputError("Form not valid", { errors });
       }
       const user = await User.findOne({ username });
 
       if (!user) {
-        errors.general = "User not found";
-        throw new UserInputError("User not found", errors);
+        throw new UserInputError("User not found", {
+          errors: {
+            general: "User not found",
+          },
+        });
       }
 
       const match = await bcrypt.compare(password, user.password);
       if (!match) {
-        errors.general = "Wrong password";
-        throw new UserInputError("Wrong password", errors);
+        throw new UserInputError("User not found", {
+          errors: {
+            general: "Wrong credentials",
+          },
+        });
       }
 
       const payload = {
