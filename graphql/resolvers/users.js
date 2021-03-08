@@ -38,6 +38,16 @@ module.exports = {
         });
       }
       // Hash password
+      if (password.length < 8) {
+        throw new UserInputError(
+          "Password must be at least 8 characters long",
+          {
+            errors: {
+              password: "Password must be at least 8 characters",
+            },
+          }
+        );
+      }
       password = await bcrypt.hash(password, 12);
       const newUser = new User({
         username: username,
