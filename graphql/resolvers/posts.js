@@ -1,13 +1,12 @@
 const Post = require("../../models/post");
 const checkAuth = require("../../util/checkAuth");
-const { AuthenticationError } = require("apollo-server");
-const { subscribe } = require("graphql");
+const { AuthenticationError, UserInputError } = require("apollo-server");
 
 module.exports = {
   Query: {
     async getPosts() {
       try {
-        const posts = await Post.find();
+        const posts = await Post.find().sort({ createdAt: -1 });
         return posts;
       } catch (err) {
         console.log(err);
@@ -29,9 +28,10 @@ module.exports = {
 
   Mutation: {
     async createPost(_, { body }, context) {
-      console.log(context);
       const user = checkAuth(context);
-
+      if (body.trim() === "") {
+        throw new UserInputError("Post body can not be empty");
+      }
       const post = new Post({
         body,
         user: user.id,
@@ -60,7 +60,7 @@ module.exports = {
         throw new Error(err);
       }
     },
-    async likePost(_, { postId }) {
+    async likePost(_, { postId }, context) {
       const { username } = checkAuth(context);
       const post = await Post.findById(postId);
       if (post) {
